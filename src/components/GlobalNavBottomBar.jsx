@@ -1,11 +1,15 @@
 import React from "react";
 import styled from "styled-components";
 
-const GlobalNavBottomBar = () => {
+const GlobalNavBottomBar = ({ size, setSize }) => {
   return (
     <Container>
-      <Menu>글씨 크게</Menu>
-      <Menu>글씨 작게</Menu>
+      <Menu size={size} onClick={() => setSize((prev) => prev + 5)}>
+        글씨 크게
+      </Menu>
+      <Menu size={size} onClick={() => setSize((prev) => prev - 5)}>
+        글씨 작게
+      </Menu>
     </Container>
   );
 };
@@ -24,7 +28,9 @@ const Container = styled.div`
   height: 100px;
 `;
 const Menu = styled.nav`
-  font-size: 20px;
+  font-size: ${(props) => {
+    return `${props.size}px`;
+  }};
   font-weight: 700;
   cursor: pointer;
 `;

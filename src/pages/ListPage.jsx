@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 
-const ListPage = () => {
+const ListPage = ({ resetTranscript, finalTranscript, size }) => {
   let today = new Date();
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth() + 1);
@@ -15,7 +15,7 @@ const ListPage = () => {
     let month = str.substring(4, 6);
     let date = str.substring(6, 8);
 
-    return `${year}${month}${date}`;
+    return `${year}년 ${month}월 ${date}일`;
   };
 
   /** 로컬스토리지의 key값(날짜)를 list에 할당 */
@@ -35,22 +35,42 @@ const ListPage = () => {
     }
   };
 
+  /** 달 변경시 새로 렌더링 */
   useEffect(() => {
     listRender();
   }, [month]);
 
+  /** STT 필터링, 해당 날짜 불러오거나 다음, 이전 입력시 달 변경 */
   useEffect(() => {
-    let month = "";
-    let date = "";
-    if (Number(today.getMonth() + 1) < 10) {
-      month = `0${today.getMonth() + 1}`;
+    let temp = finalTranscript.replace(/\년+|\월+|\일/g, "");
+    let year = temp.substring(0, 4);
+    let month = temp.substring(5, 7).replace(/\s/g, "");
+    let date = temp.substring(7).replace(/\s/g, "");
+    if (Number(month) < 10) {
+      month = `0${month}`;
     }
-    if (Number(today.getDate()) < 10) {
-      date = `0${today.getDate()}`;
+    if (Number(date) < 10) {
+      date = `0${date}`;
     }
-
-    callDiaryContent(`${year}${month}${date}`);
-  }, []);
+    temp = `${year}${month}${date}`;
+    if (localStorage.getItem(temp)) {
+      setDate([...finalTranscript]);
+      setContent([...localStorage.getItem(temp)]);
+      resetTranscript();
+      return;
+    }
+    if (finalTranscript == "다음") {
+      datePlus();
+      resetTranscript();
+      return;
+    }
+    if (finalTranscript == "이전") {
+      dateMinus();
+      resetTranscript();
+      return;
+    }
+    resetTranscript();
+  }, [finalTranscript]);
 
   /** 날짜 증가 함수 */
   const datePlus = () => {
@@ -74,19 +94,16 @@ const ListPage = () => {
 
   /** 해당날짜의 일기 내용 불러오는 함수 */
   const callDiaryContent = (date) => {
-    let tempDate = `${date.substring(0, 4)}년 ${Number(
-      date.substring(4, 6)
-    )}월 ${Number(date.substring(6, 8))}일`;
-    let tempContent = localStorage.getItem(date);
-
-    setDate([...tempDate]);
+    let tempDate = date.replace(/\s+|\년+|\월+|\일/g, "");
+    let tempContent = localStorage.getItem(tempDate);
+    setDate([...date]);
     setContent([...tempContent]);
   };
 
   return (
     <Container>
       <SideBar>
-        <DateWrapper>
+        <DateWrapper size={size}>
           <Button
             onClick={() => {
               dateMinus();
@@ -107,22 +124,19 @@ const ListPage = () => {
         </DateWrapper>
         {list.map((i) => {
           return (
-            <List key={i} onClick={() => callDiaryContent(i)}>
-              {`${i.substring(0, 4)}년 ${Number(i.substring(4, 6))}월 ${Number(
-                i.substring(6, 8)
-              )}일`}
+            <List size={size} key={i} onClick={() => callDiaryContent(i)}>
+              {i}
             </List>
           );
         })}
       </SideBar>
-      <DiaryContent>
-        <DiaryDate>{date}</DiaryDate>
+      <DiaryContent size={size}>
+        <DiaryDate size={size}>{date}</DiaryDate>
         {content}
       </DiaryContent>
     </Container>
   );
 };
-
 const Container = styled.div`
   display: flex;
 `;
@@ -130,7 +144,7 @@ const SideBar = styled.div`
   padding-top: 10px;
   box-sizing: border-box;
   position: fixed;
-  width: 250px;
+  width: 350px;
   border-right: 5px solid rgb(135, 231, 176);
   height: 100vh;
 `;
@@ -139,7 +153,9 @@ const DateWrapper = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
+  font-size: ${(props) => {
+    return `${props.size}px`;
+  }};
   font-weight: 700;
 `;
 const Button = styled.button`
@@ -158,17 +174,24 @@ const List = styled.div`
   height: 50px;
   cursor: pointer;
   font-weight: 500;
+  font-size: ${(props) => {
+    return `${props.size}px`;
+  }};
 `;
 
 const DiaryContent = styled.div`
   padding-top: 20px;
-  padding-left: 270px;
-  font-size: 20px;
+  padding-left: 370px;
+  font-size: ${(props) => {
+    return `${props.size}px`;
+  }};
 `;
 
 const DiaryDate = styled.div`
   margin-bottom: 15px;
-  font-size: 30px;
+  font-size: ${(props) => {
+    return `${props.size + 5}px`;
+  }};
   font-weight: 700;
 `;
 
